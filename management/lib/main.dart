@@ -1,122 +1,195 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      // Application name
+      title: 'Stateful Widget',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      // A widget that will be started on the application startup
+      home: CounterWidget(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class CounterWidget extends StatefulWidget {
+  const CounterWidget({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  // ignore: library_private_types_in_public_api
+  _CounterWidgetState createState() => _CounterWidgetState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _CounterWidgetState extends State<CounterWidget> {
+  //initial counter value
   int _counter = 0;
+  final int _maxCounter = 100;
+  final TextEditingController _incrementController = TextEditingController();
+  final List<int> _counterHistory = [];
+
+  void resetCounter() {
+    setState(() {
+      _counterHistory.add(_counter);
+      _counter = 0;
+    });
+  }
 
   void _incrementCounter() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      if (_counter < _maxCounter) {
+        _counterHistory.add(_counter);
+        _counter++;
+        if (_counter == _maxCounter) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Maximum limit reached!')));
+        }
+      }
+    });
+  }
+
+  void _decrementCounter() {
+    setState(() {
+      if (_counter > 0) {
+        _counterHistory.add(_counter);
+        _counter--;
+      }
+    });
+  }
+
+  void _customIncrementCounter() {
+    final int? incrementValue = int.tryParse(_incrementController.text);
+    if (incrementValue != null) {
+      setState(() {
+        if (_counter + incrementValue <= _maxCounter) {
+          _counterHistory.add(_counter);
+          _counter += incrementValue;
+          if (_counter == _maxCounter) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Maximum limit reached!')));
+          }
+        } else {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Maximum limit reached!')));
+        }
+      });
+    } else {
+      // Show an error message if the input is not a valid number
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please enter a valid number')));
+    }
+  }
+
+  void _undoCounter() {
+    setState(() {
+      if (_counterHistory.isNotEmpty) {
+        _counter = _counterHistory.removeLast();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    Color counterColor;
+    if (_counter == 0) {
+      counterColor = Colors.red;
+    } else if (_counter > 50) {
+      counterColor = Colors.green;
+    } else {
+      counterColor = Colors.blue;
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      appBar: AppBar(title: const Text('Stateful Widget')),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Center(
+            child: Container(
+              color: counterColor,
+              child: Text(
+                //displays the current number
+                '$_counter',
+                style: TextStyle(fontSize: 50.0),
+              ),
             ),
-          ],
-        ),
+          ),
+          Slider(
+            min: 0,
+            max: _maxCounter.toDouble(),
+            value: _counter.toDouble(),
+            onChanged: (double value) {
+              setState(() {
+                _counter = value.toInt();
+              });
+            },
+            activeColor: Colors.blue,
+            inactiveColor: Colors.red,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _incrementController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Enter custom increment value',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: resetCounter,
+                child: const Text('Reset'),
+              ),
+              ElevatedButton(
+                onPressed: _decrementCounter,
+                child: const Text('Decrement'),
+              ),
+              const SizedBox(width: 20),
+              ElevatedButton(
+                onPressed: _incrementCounter,
+                child: const Text('Increment'),
+              ),
+              const SizedBox(width: 20),
+              ElevatedButton(
+                onPressed: _customIncrementCounter,
+                child: const Text('Custom Increment'),
+              ),
+              const SizedBox(width: 20),
+              ElevatedButton(
+                onPressed: _undoCounter,
+                child: const Text('Undo'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Counter History:',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _counterHistory.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text('Value: ${_counterHistory[index]}'),
+                );
+              },
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
